@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SmartLearn Video Player</title>
+  <style>
+    :root {
+      --bg-light: #f4f4f4;
+      --bg-dark: #181818;
+      --text-light: #333;
+      --text-dark: #fff;
+      --accent: #004aad;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: row;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .sidebar {
+      width: 300px;
+      background: #fff;
+      border-right: 1px solid #ccc;
+      padding: 20px;
+      height: 100vh;
+      overflow-y: auto;
+      transition: background 0.3s;
+    }
+
+    body.dark .sidebar {
+      background: #242424;
+      border-color: #444;
+    }
+
+    .sidebar h3 {
+      color: var(--accent);
+    }
+
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      padding: 5px;
+      border-radius: 5px;
+    }
+
+    .playlist-item:hover {
+      background: rgba(0, 74, 173, 0.1);
+    }
+
+    .playlist-item img {
+      width: 60px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .player-container {
+      flex-grow: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 10px;
+    }
+
+    .top-bar button {
+      padding: 6px 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .video-box {
+      width: 100%;
+      max-width: 900px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .title {
+      padding: 10px;
+      font-size: 20px;
+      background: #fff;
+      color: #222;
+      border-bottom: 1px solid #ddd;
+    }
+
+    body.dark .title {
+      background: #222;
+      color: #eee;
+      border-color: #444;
+    }
+
+    video {
+      width: 100%;
+      background: #000;
+      display: block;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      background: #1c1c1c;
+      color: white;
+      padding: 10px;
+    }
+
+    .controls button,
+    .controls input,
+    .controls select {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    .controls input[type=range] {
+      width: 100px;
+    }
+
+    .fullscreen-btn {
+      margin-left: auto;
+    }
+
+    @media screen and (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        order: 2;
+      }
+
+      .player-container {
+        order: 1;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .top-bar {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h3>Class Playlist</h3>
+  <div class="playlist-item" onclick="loadVideo('video1.mp4', 'Lesson 1: Introduction to Smart Learning')">
+    <img src="thumb1.jpg" alt="Lesson 1">
+    <span>Lesson 1</span>
+  </div>
+  <div class="playlist-item" onclick="loadVideo('video2.mp4', 'Lesson 2: Understanding the Basics')">
+    <img src="thumb2.jpg" alt="Lesson 2">
+    <span>Lesson 2</span>
+  </div>
+  <div class="playlist-item" onclick="loadVideo('video3.mp4', 'Lesson 3: Advanced Techniques')">
+    <img src="thumb3.jpg" alt="Lesson 3">
+    <span>Lesson 3</span>
+  </div>
+</div>
+
+<div class="player-container">
+  <div class="top-bar">
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+  </div>
+
+  <div class="video-box" id="videoBox">
+    <div class="title" id="videoTitle">Lesson 1: Introduction to Smart Learning</div>
+    <video id="myVideo">
+      <source src="" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <div class="controls">
+      <button onclick="togglePlay()">▶️/⏸️</button>
+      <input type="range" id="seekBar" value="0" onchange="seekVideo()">
+      <button onclick="toggleMute()">🔇/🔊</button>
+      <input type="range" id="volumeBar" min="0" max="1" step="0.1" value="1" onchange="setVolume()">
+      <select onchange="setSpeed(this.value)">
+        <option value="1">Speed</option>
+        <option value="0.5">0.5x</option>
+        <option value="1">1x</option>
+        <option value="1.5">1.5x</option>
+        <option value="2">2x</option>
+      </select>
+      <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+      <span id="time">00:00 / 00:00</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById('myVideo');
+  const seekBar = document.getElementById('seekBar');
+  const volumeBar = document.getElementById('volumeBar');
+  const timeDisplay = document.getElementById('time');
+  const videoTitle = document.getElementById('videoTitle');
+  const body = document.body;
+
+  function togglePlay() {
+    video.paused ? video.play() : video.pause();
+  }
+
+  function toggleMute() {
+    video.muted = !video.muted;
+  }
+
+  function setVolume() {
+    video.volume = volumeBar.value;
+  }
+
+  function seekVideo() {
+    const time = video.duration * (seekBar.value / 100);
+    video.currentTime = time;
+  }
+
+  function setSpeed(speed) {
+    video.playbackRate = speed;
+  }
+
+  function toggleFullscreen() {
+    const box = document.getElementById('videoBox');
+    if (!document.fullscreenElement) {
+      box.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  function toggleDarkMode() {
+    body.classList.toggle('dark');
+  }
+
+  video.addEventListener('timeupdate', () => {
+    const value = (100 / video.duration) * video.currentTime;
+    seekBar.value = value;
+    const format = (s) => ('0' + Math.floor(s / 60)).slice(-2) + ':' + ('0' + Math.floor(s % 60)).slice(-2);
+    timeDisplay.textContent = format(video.currentTime) + ' / ' + format(video.duration);
+  });
+
+  function loadVideo(src, title) {
+    video.src = src;
+    videoTitle.textContent = title;
+    video.load();
+    video.play();
+  }
+</script>
+
+</body>
+</html>
